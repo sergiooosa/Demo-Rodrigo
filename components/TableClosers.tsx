@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Closer, DateRange, CallAnalysisNote } from '../types';
 import { money0, pct, safeDiv } from '../utils/helpers';
-import { Call, getCallsForCloser, fmtTime, fmtDateTime, getOutcomeColor, getResultColor } from '../lib/calls';
+import { Call, getCallsForCloser, fmtTime, fmtDateTime, fmtDate, getOutcomeColor, getResultColor } from '../lib/calls';
 import { getLeadNote } from '../lib/leadNotes';
 import { getCallAnalysis, maskPhone } from '../lib/callAnalysis';
 import { exportToXlsx, generateFilename, sanitizeFilename } from '../lib/export';
@@ -157,22 +157,22 @@ export default function TableClosers({ closers, dateRange }: TableClosersProps) 
     
       // Sort by date (newest first)
   return calls.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
-};
+  };
 
-// Get color for result status
-const getResultStatusColor = (result: string): string => {
-  switch (result) {
-    case 'Venta':
-      return 'text-[#58F178] border-[#58F178] bg-[rgba(88,241,120,0.1)]'; // Verde
-    case 'Oferta enviada':
-      return 'text-[#FFD84D] border-[#FFD84D] bg-[rgba(255,216,77,0.1)]'; // Amarillo
-    case 'Perdida':
-    case 'No calificada':
-      return 'text-[#FF6B6B] border-[#FF6B6B] bg-[rgba(255,107,107,0.1)]'; // Rojo
-    default:
-      return 'text-tx2 border-tx2 bg-[rgba(157,169,192,0.1)]';
-  }
-};
+  // Get color for result status
+  const getResultStatusColor = (result: string): string => {
+    switch (result) {
+      case 'Venta':
+        return 'text-[#58F178] border-[#58F178] bg-[rgba(88,241,120,0.1)]'; // Verde
+      case 'Oferta enviada':
+        return 'text-[#FFD84D] border-[#FFD84D] bg-[rgba(255,216,77,0.1)]'; // Amarillo
+      case 'Perdida':
+      case 'No calificada':
+        return 'text-[#FF6B6B] border-[#FF6B6B] bg-[rgba(255,107,107,0.1)]'; // Rojo
+      default:
+        return 'text-tx2 border-tx2 bg-[rgba(157,169,192,0.1)]';
+    }
+  };
 
   // Handle opening lead notes modal
   const handleViewNotes = (lead: string, closer: string, result?: string) => {
@@ -310,7 +310,6 @@ const getResultStatusColor = (result: string): string => {
           <tr className="border-b border-border">
             <th className="w-8 py-3 px-2"></th>
             <th className="text-left py-3 px-2 text-tx2">Closer</th>
-            <th className="text-right py-3 px-2 text-tx2">Leads</th>
             <th className="text-right py-3 px-2 text-tx2">Agendas</th>
             <th className="text-right py-3 px-2 text-tx2">Shows</th>
             <th className="text-right py-3 px-2 text-tx2">Ofertas</th>
@@ -352,7 +351,6 @@ const getResultStatusColor = (result: string): string => {
                     </svg>
                   </td>
                   <td className="py-3 px-2 font-medium">{closer.closer}</td>
-                  <td className="py-3 px-2 text-right">{closer.leads}</td>
                   <td className="py-3 px-2 text-right">{closer.agendas}</td>
                   <td className="py-3 px-2 text-right">{closer.shows}</td>
                   <td className="py-3 px-2 text-right">{closer.offers}</td>
@@ -445,58 +443,80 @@ const getResultStatusColor = (result: string): string => {
                                   <table className="w-full text-xs">
                                     <thead>
                                       <tr className="border-b border-white/5">
-                                        <th className="text-left py-2 px-1 text-tx2">Fecha/Hora</th>
+                                        <th className="text-left py-2 px-1 text-tx2">Fecha</th>
                                         <th className="text-left py-2 px-1 text-tx2">Lead</th>
-                                        <th className="text-center py-2 px-1 text-tx2">Estado</th>
-                                        <th className="text-center py-2 px-1 text-tx2">Resultado</th>
-                                        <th className="text-right py-2 px-1 text-tx2">Monto</th>
+                                        <th className="text-center py-2 px-1 text-tx2">Asistió</th>
+                                        <th className="text-center py-2 px-1 text-tx2">Ofertado</th>
+                                        <th className="text-center py-2 px-1 text-tx2">Cerrado</th>
+                                        <th className="text-right py-2 px-1 text-tx2">Cash</th>
+                                        <th className="text-right py-2 px-1 text-tx2">Facturación</th>
                                         <th className="text-center py-2 px-1 text-tx2">Notas</th>
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {filteredCalls.map((call) => (
-                                    <tr 
-                                      key={call.id} 
-                                      className="border-t border-white/5 hover:bg-white/6 hover:ring-1 hover:ring-white/15 transition-colors"
-                                    >
-                                      <td className="py-2 px-1 text-tx1">{fmtDateTime(call.ts)}</td>
-                                      <td className="py-2 px-1 whitespace-nowrap">
-                                        <span 
-                                          className="text-white/90 cursor-pointer" 
-                                          title={maskPhone(call.phone)}
-                                        >
-                                          {call.lead}
-                                        </span>
-                                      </td>
-                                      <td className="py-2 px-1 text-center">
-                                        <span className={`inline-block px-2 py-1 text-xs rounded-full border ${getOutcomeColor(call.outcome)}`}>
-                                          {call.outcome}
-                                        </span>
-                                      </td>
-                                      <td className="py-2 px-1 text-center">
-                                        <span className={`inline-block px-2 py-1 text-xs rounded-full border ${getResultStatusColor(call.result)}`}>
-                                          {call.result}
-                                        </span>
-                                      </td>
-                                      <td className="py-2 px-1 text-right">
-                                        {call.amount && call.amount > 0 ? (
-                                          <span className="text-[#58F178] font-medium">{money0(call.amount)}</span>
-                                        ) : (
-                                          <span className="text-tx2">—</span>
-                                        )}
-                                      </td>
-                                      <td className="py-2 px-1 text-center">
-                                        <button
-                                          onClick={() => handleViewCallAnalysis(call)}
-                                          className="px-2 py-1 text-xs font-medium rounded-full bg-white/8 hover:bg-white/12 border border-white/15 text-white transition-colors"
-                                        >
-                                          Ver notas
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                      {filteredCalls.map((call) => {
+                                        const asistio = call.outcome === 'Show';
+                                        const ofertado = call.result === 'Venta' || call.result === 'Oferta';
+                                        const cerrado = call.result === 'Venta';
+                                        const cash = call.amount || 0;
+                                        const facturacion = cerrado ? cash : 0;
+                                        
+                                        return (
+                                          <tr 
+                                            key={call.id} 
+                                            className="border-t border-white/5 hover:bg-white/6 hover:ring-1 hover:ring-white/15 transition-colors"
+                                          >
+                                            <td className="py-2 px-1 text-tx1">{fmtDate(call.ts)}</td>
+                                            <td className="py-2 px-1 whitespace-nowrap">
+                                              <span 
+                                                className="text-white/90 cursor-pointer" 
+                                                title={maskPhone(call.phone)}
+                                              >
+                                                {call.lead}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 px-1 text-center">
+                                              <span className={`inline-block px-2 py-1 text-xs rounded-full font-semibold ${
+                                                asistio 
+                                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                              }`}>
+                                                {asistio ? 'Sí' : 'No'}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 px-1 text-center">
+                                              <span className={`inline-block px-2 py-1 text-xs rounded-full font-semibold ${
+                                                ofertado 
+                                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                                                  : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                              }`}>
+                                                {ofertado ? 'Sí' : 'No'}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 px-1 text-center">
+                                              <span className={`inline-block px-2 py-1 text-xs rounded-full font-semibold ${
+                                                cerrado 
+                                                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                                                  : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                              }`}>
+                                                {cerrado ? 'Sí' : 'No'}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 px-1 text-right text-tx1">{money0(cash)}</td>
+                                            <td className="py-2 px-1 text-right text-tx1">{money0(facturacion)}</td>
+                                            <td className="py-2 px-1 text-center">
+                                              <button
+                                                onClick={() => handleViewCallAnalysis(call)}
+                                                className="px-2 py-1 text-xs font-medium rounded bg-white/8 hover:bg-white/12 border border-white/15 text-white transition-colors"
+                                              >
+                                                Ver notas
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
                                 );
                               })()}
                             </div>

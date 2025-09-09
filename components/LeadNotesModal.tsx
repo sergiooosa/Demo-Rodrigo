@@ -95,8 +95,8 @@ export default function LeadNotesModal({ isOpen, onClose, leadNote }: LeadNotesM
 
   const getMethodColor = (fuente: string) => {
     if (fuente.includes('Meta')) return '#1877F2';
-    if (fuente.includes('TikTok')) return '#FE2C55';
-    if (fuente.includes('Google')) return '#4285F4';
+    if (fuente.includes('Prospección')) return '#34A853';
+    if (fuente.includes('Orgánico')) return '#FF6F61';
     return '#3B82F6';
   };
 

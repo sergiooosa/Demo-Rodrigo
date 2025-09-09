@@ -55,7 +55,7 @@ http://localhost:3000
 - Tabla expandible con sub-campañas (H1, H2, H3, H4)
 - Filtro automático para Meta Ads
 - Gráficos de Cash vs Spend y ROAS por medio
-- Tarjetas de resumen por método (TikTok, Meta, Google, Prospección, Orgánico)
+- Tarjetas de resumen por método (Meta, Prospección, Orgánico)
 
 ### Sección 3: TRACKER DE CLOSERS
 - Tabla expandible con agendas por closer

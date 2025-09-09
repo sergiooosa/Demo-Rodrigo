@@ -1,10 +1,14 @@
 export interface SubCampaign {
   name: "H1" | "H2" | "H3" | "H4";
   spend: number;
+  impressions: number;
+  ctr: number;
   agendasQ: number;
   showsQ: number;
   sales: number;
   cash: number;
+  reservas?: number;
+  valorReservas?: number;
   cpaq?: number;
   cpsq?: number;
   cac?: number;
@@ -16,11 +20,15 @@ export interface Ad {
   adName: string;
   medium: string;
   spend: number;
+  impressions: number;
+  ctr: number;
   agendas: number;
   agendasQ: number;
   showsQ: number;
   sales: number;
   cash: number;
+  reservas?: number;
+  valorReservas?: number;
   campaigns?: SubCampaign[];
 }
 

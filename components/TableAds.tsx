@@ -39,6 +39,60 @@ export default function TableAds({ ads }: TableAdsProps) {
     return { cpaq, cpsq, cac };
   };
 
+  // Calculate totals for an ad (sum of all its campaigns)
+  const getAdTotals = (ad: Ad) => {
+    const campaigns = getAdCampaigns(ad);
+    const totals = campaigns.reduce((acc, campaign) => ({
+      spend: acc.spend + campaign.spend,
+      impressions: acc.impressions + campaign.impressions,
+      agendasQ: acc.agendasQ + campaign.agendasQ,
+      showsQ: acc.showsQ + campaign.showsQ,
+      sales: acc.sales + campaign.sales,
+      cash: acc.cash + campaign.cash,
+      reservas: acc.reservas + (campaign.reservas || 0),
+      valorReservas: acc.valorReservas + (campaign.valorReservas || 0),
+    }), {
+      spend: 0,
+      impressions: 0,
+      agendasQ: 0,
+      showsQ: 0,
+      sales: 0,
+      cash: 0,
+      reservas: 0,
+      valorReservas: 0,
+    });
+
+    // Calculate derived metrics
+    const ctr = safeDiv(totals.impressions, totals.spend) * 100; // This would need actual clicks data
+    const cpaq = safeDiv(totals.spend, totals.agendasQ);
+    const cpsq = safeDiv(totals.spend, totals.showsQ);
+    const cac = safeDiv(totals.spend, totals.sales);
+    const roas = safeDiv(totals.cash, totals.spend);
+
+    return {
+      ...totals,
+      ctr: ctr.toFixed(1),
+      cpaq,
+      cpsq,
+      cac,
+      roas,
+    };
+  };
+
+  // Get campaign color based on ad name
+  const getCampaignColor = (adName: string) => {
+    switch (adName) {
+      case 'Testing':
+        return '#10B981'; // Verde esmeralda
+      case 'Scala':
+        return '#3B82F6'; // Azul
+      case 'Retargeting':
+        return '#8B5CF6'; // Morado
+      default:
+        return '#6B7280'; // Gris
+    }
+  };
+
   return (
     <div 
       className="glass glow rounded-xl p-6 shadow-lg overflow-x-auto transition-all duration-300"
@@ -62,10 +116,14 @@ export default function TableAds({ ads }: TableAdsProps) {
             <th className="text-left py-3 px-2 text-tx2">Ad / Campaña</th>
             <th className="text-left py-3 px-2 text-tx2">Medio</th>
             <th className="text-right py-3 px-2 text-tx2">Spend</th>
+            <th className="text-right py-3 px-2 text-tx2">Impresiones</th>
+            <th className="text-right py-3 px-2 text-tx2">CTR</th>
             <th className="text-right py-3 px-2 text-tx2">AgendasQ</th>
             <th className="text-right py-3 px-2 text-tx2">ShowsQ</th>
             <th className="text-right py-3 px-2 text-tx2">Ventas</th>
             <th className="text-right py-3 px-2 text-tx2">Cash</th>
+            <th className="text-right py-3 px-2 text-tx2">Reservas</th>
+            <th className="text-right py-3 px-2 text-tx2">Valor Reservas</th>
             <th className="text-right py-3 px-2 text-tx2">CPA-Q</th>
             <th className="text-right py-3 px-2 text-tx2">CPS-Q</th>
             <th className="text-right py-3 px-2 text-tx2">CAC</th>
@@ -79,12 +137,15 @@ export default function TableAds({ ads }: TableAdsProps) {
             
             return (
               <Fragment key={ad.adId}>
-                {/* Parent Row - Ad Name and Medium */}
+                {/* Parent Row - Ad Name and Medium with Totals */}
                 <tr 
                   className="border-t border-white/10 bg-white/4 hover:bg-white/6 cursor-pointer transition-colors"
                   onClick={() => toggleExpanded(ad.adId)}
+                  style={{
+                    borderLeft: `4px solid ${getCampaignColor(ad.adName)}`,
+                  }}
                 >
-                  <td className="py-3 px-2" colSpan={2}>
+                  <td className="py-3 px-2">
                     <div className="flex items-center gap-2">
                       <svg 
                         className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} 
@@ -95,12 +156,29 @@ export default function TableAds({ ads }: TableAdsProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                       <span className="font-medium">{ad.adName}</span>
-                      <span className="text-white/70">· {ad.medium}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-2 text-white/40 text-right" colSpan={9}>
-                    — ver {campaigns.length} campañas —
-                  </td>
+                  <td className="py-3 px-2 text-tx2">{ad.medium}</td>
+                  {(() => {
+                    const totals = getAdTotals(ad);
+                    return (
+                      <>
+                        <td className="py-3 px-2 text-right">{money0(totals.spend)}</td>
+                        <td className="py-3 px-2 text-right">{totals.impressions.toLocaleString()}</td>
+                        <td className="py-3 px-2 text-right">{totals.ctr}%</td>
+                        <td className="py-3 px-2 text-right">{totals.agendasQ}</td>
+                        <td className="py-3 px-2 text-right">{totals.showsQ}</td>
+                        <td className="py-3 px-2 text-right font-semibold">{totals.sales}</td>
+                        <td className="py-3 px-2 text-right">{money0(totals.cash)}</td>
+                        <td className="py-3 px-2 text-right">{totals.reservas}</td>
+                        <td className="py-3 px-2 text-right">{money0(totals.valorReservas)}</td>
+                        <td className="py-3 px-2 text-right">{money2(totals.cpaq)}</td>
+                        <td className="py-3 px-2 text-right">{money2(totals.cpsq)}</td>
+                        <td className="py-3 px-2 text-right">{money0(totals.cac)}</td>
+                        <td className="py-3 px-2 text-right">{x(totals.roas)}</td>
+                      </>
+                    );
+                  })()}
                 </tr>
                 
                 {/* Child Rows - Campaigns */}
@@ -111,16 +189,24 @@ export default function TableAds({ ads }: TableAdsProps) {
                     <tr 
                       key={`${ad.adId}-${campaign.name}`} 
                       className="border-t border-white/5 hover:bg-white/6 hover:ring-1 hover:ring-white/15 transition-colors"
+                      style={{
+                        borderLeft: `4px solid ${getCampaignColor(ad.adName)}`,
+                        backgroundColor: `${getCampaignColor(ad.adName)}05`, // 5% opacity
+                      }}
                     >
                       <td className="py-2 px-2 pl-8">
                         <strong className="text-tx1">{campaign.name}</strong>
                       </td>
                       <td className="py-2 px-2 text-tx2">{ad.medium}</td>
                       <td className="py-2 px-2 text-right">{money0(campaign.spend)}</td>
+                      <td className="py-2 px-2 text-right">{campaign.impressions.toLocaleString()}</td>
+                      <td className="py-2 px-2 text-right">{campaign.ctr}%</td>
                       <td className="py-2 px-2 text-right">{campaign.agendasQ}</td>
                       <td className="py-2 px-2 text-right">{campaign.showsQ}</td>
                       <td className="py-2 px-2 text-right font-semibold">{campaign.sales}</td>
                       <td className="py-2 px-2 text-right">{money0(campaign.cash)}</td>
+                      <td className="py-2 px-2 text-right">{campaign.reservas || 0}</td>
+                      <td className="py-2 px-2 text-right">{money0(campaign.valorReservas || 0)}</td>
                       <td className="py-2 px-2 text-right">{money2(metrics.cpaq)}</td>
                       <td className="py-2 px-2 text-right">{money2(metrics.cpsq)}</td>
                       <td className="py-2 px-2 text-right">{money0(metrics.cac)}</td>

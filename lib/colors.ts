@@ -7,8 +7,6 @@ export const TX1 = "#E6ECFF";
 export const TX2 = "#9DA9C0";
 
 // Métodos (colores sólidos exactos)
-export const GOOGLE = "#4285F4";   // Google Ads (azul)
-export const TIKTOK = "#FE2C55";   // TikTok Ads (fucsia)
 export const META   = "#1877F2";   // Meta Ads (azul meta)
 export const PROSPE = "#34A853";   // Prospección (verde)
 export const ORGAN  = "#FF6F61";   // Orgánico (coral)
@@ -20,8 +18,6 @@ export const BAD    = "#FF6B6B";   // Malo
 
 // Mapa por método
 export const METHOD_COLOR: Record<string,string> = {
-  "Google Ads": GOOGLE,
-  "TikTok Ads": TIKTOK,
   "Meta Ads":   META,
   "Prospección": PROSPE,
   "Orgánico":   ORGAN,

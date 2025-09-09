@@ -18,11 +18,14 @@ import BarCashVsSpend from '../components/BarCashVsSpend';
 import ROASChart from '../components/ROASChart';
 import DateFilter from '../components/DateFilter';
 import MethodSummaryCards from '../components/MethodSummaryCards';
+import ChatWidget from '../components/ChatWidget';
 
 export default function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<DateFilterType>('30days');
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
   useEffect(() => {
     const now = new Date();
@@ -42,63 +45,156 @@ export default function Dashboard() {
     setDateRange(range);
   };
 
-  // Calculate totals for Ads (only where spend > 0)
-  const adsWithSpend = (adsData as Ad[]).filter((ad: Ad) => ad.spend > 0);
-  const spendAdsTotal = sum(adsWithSpend.map((ad: Ad) => ad.spend));
-  const agendasQTotal = sum(adsWithSpend.map((ad: Ad) => ad.agendasQ));
-  const showsQTotal = sum(adsWithSpend.map((ad: Ad) => ad.showsQ));
-  const salesTotal = sum(adsWithSpend.map((ad: Ad) => ad.sales));
-  const cashAdsTotal = sum(adsWithSpend.map((ad: Ad) => ad.cash));
+  // Lista de clientes/negocios
+  const clients = [
+    { id: 'cliente1', name: 'Digital Marketing Academy', industry: 'Cursos Online' },
+    { id: 'cliente2', name: 'Business Coaching Pro', industry: 'Coaching Ejecutivo' },
+    { id: 'cliente3', name: 'Leadership Consultancy', industry: 'Consultoría' },
+    { id: 'cliente4', name: 'Sales Mastery Course', industry: 'Cursos de Ventas' },
+    { id: 'cliente5', name: 'Entrepreneur Institute', industry: 'Coaching Empresarial' },
+    { id: 'cliente6', name: 'Financial Advisory Pro', industry: 'Consultoría Financiera' },
+    { id: 'cliente7', name: 'Personal Development Hub', industry: 'Coaching Personal' },
+    { id: 'cliente8', name: 'Marketing Strategy Lab', industry: 'Consultoría Marketing' },
+    { id: 'cliente9', name: 'Success Mindset Academy', industry: 'Cursos de Desarrollo' },
+    { id: 'cliente10', name: 'Business Growth Coach', industry: 'Coaching de Negocios' }
+  ];
 
-  // Calculate totals from all methods (Ads + Prospección + Orgánico)
-  const salesTotalAll = sum((methodsData as Method[]).map((m: Method) => m.sales || 0));
-  const cashTotalAll = sum((methodsData as Method[]).map((m: Method) => m.cash || 0));
-  const billingTotal = (methodsData as Method[]).some(m => typeof (m as any).billing === "number")
-    ? sum((methodsData as Method[]).map(m => (m as any).billing || 0))
-    : cashTotalAll; // fallback temporal
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClient(clientId);
+  };
 
-  // Calculate KPIs
-  const cpaQ = safeDiv(spendAdsTotal, agendasQTotal);
-  const cpsQ = safeDiv(spendAdsTotal, showsQTotal);
-  const cac = safeDiv(spendAdsTotal, salesTotal);
-  const roasGeneral = safeDiv(cashAdsTotal, spendAdsTotal);
+  const handleBackToClients = () => {
+    setSelectedClient(null);
+  };
 
-  // Calculate sales totals
-  const totalSales = sum((closersData as Closer[]).map((closer: Closer) => closer.sales));
-  const totalCash = sum((closersData as Closer[]).map((closer: Closer) => closer.cash));
-  const totalAgendas = sum((closersData as Closer[]).map((closer: Closer) => closer.agendas));
-  const totalShows = sum((closersData as Closer[]).map((closer: Closer) => closer.shows));
-  const totalLeads = sum((closersData as Closer[]).map((closer: Closer) => closer.leads));
+  // Función para generar datos personalizados por cliente
+  const getClientData = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    const baseMultiplier = Math.random() * 0.5 + 0.75; // Entre 0.75 y 1.25
+    
+    return {
+      name: client?.name || 'Cliente',
+      industry: client?.industry || 'Negocio',
+      investment: Math.round(5100 * baseMultiplier),
+      impressions: Math.round(150000 * baseMultiplier),
+      ctr: (2.8 * baseMultiplier).toFixed(1),
+      vslPlayRate: (65.2 * baseMultiplier).toFixed(1),
+      vslEngagement: (35.2 * baseMultiplier).toFixed(1),
+      meetingsScheduled: Math.round(247 * baseMultiplier),
+      meetingsQualified: Math.round(201 * baseMultiplier),
+      meetingsAttended: Math.round(170 * baseMultiplier),
+      callsClosed: Math.round(63 * baseMultiplier),
+      revenue: Math.round(18500 * baseMultiplier),
+      cash: Math.round(18500 * baseMultiplier),
+      avgTicket: Math.round(18500 * baseMultiplier / Math.round(63 * baseMultiplier))
+    };
+  };
 
-  const cierrePercentage = safeDiv(totalSales, totalAgendas);
-  const showPercentage = safeDiv(totalShows, totalAgendas);
+  const clientData = selectedClient ? getClientData(selectedClient) : null;
 
-  // State for variations to avoid hydration mismatch
-  const [variations, setVariations] = useState<string[]>([]);
+  // Si no hay cliente seleccionado, mostrar la lista de clientes
+  if (!selectedClient) {
+    return (
+      <div className="min-h-screen">
+        {/* Header */}
+        <header className="glass border-b border-border p-6 mb-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-tx1">autoKpi</h1>
+                  <p className="text-sm text-tx2">Dashboard Tracker</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-center text-sm text-tx2">
+              <span>Última actualización: {lastUpdate}</span>
+            </div>
+          </div>
+        </header>
 
-  useEffect(() => {
-    // Generate variations only on client side
-    setVariations([
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation(),
-      getRandomVariation()
-    ]);
-  }, []);
+        {/* Sección de Saludo Separada */}
+        <div className="max-w-7xl mx-auto px-6 mb-8">
+          <div className="glass p-8 rounded-xl text-center">
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent mb-2 animate-pulse">
+              ¡Hola Rodrigo!
+            </h2>
+            <p className="text-lg text-tx2">¿Qué cliente quieres revisar hoy?</p>
+          </div>
+        </div>
 
+        {/* Lista de Clientes */}
+        <main className="max-w-7xl mx-auto px-6 pb-12">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-tx1 mb-2">Clientes</h2>
+            <p className="text-tx2">Selecciona un cliente para ver su dashboard personalizado</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {clients.map((client) => (
+              <div
+                key={client.id}
+                onClick={() => handleClientSelect(client.id)}
+                className="glass p-6 rounded-xl cursor-pointer hover:scale-105 transition-all duration-200 hover:shadow-lg border border-border hover:border-blue-400/50"
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-white font-bold text-xl">
+                      {client.name.split(' ').map(word => word[0]).join('')}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-tx1 mb-2">{client.name}</h3>
+                  <p className="text-sm text-tx2 mb-4">{client.industry}</p>
+                  <div className="text-xs text-blue-400 font-medium">
+                    Ver Dashboard →
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Si hay cliente seleccionado, mostrar el dashboard personalizado
   return (
     <div className="min-h-screen">
       {/* Header */}
       <header className="glass border-b border-border p-6 mb-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-tx1 mb-2">Dashboard Tracker</h1>
-          <div className="flex flex-col sm:flex-row sm:justify-between text-sm text-tx2">
-            <span>Actualización diaria 12:00 pm (GMT-5)</span>
+          {/* Logo y Navegación */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-tx1">autoKpi</h1>
+                <p className="text-sm text-tx2">Dashboard - {clients.find(c => c.id === selectedClient)?.name}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleBackToClients}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Volver a Clientes
+            </button>
+          </div>
+          
+          <div className="flex justify-center text-sm text-tx2">
             <span>Última actualización: {lastUpdate}</span>
           </div>
           <div className="text-xs text-tx2 mt-1">
@@ -106,6 +202,16 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* Sección de Saludo Separada */}
+      <div className="max-w-7xl mx-auto px-6 mb-8">
+        <div className="glass p-8 rounded-xl text-center">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent mb-2 animate-pulse">
+            ¡Hola Rodrigo!
+          </h2>
+          <p className="text-lg text-tx2">Dashboard personalizado de {clients.find(c => c.id === selectedClient)?.name}</p>
+        </div>
+      </div>
 
       <main className="max-w-7xl mx-auto px-6 pb-12">
         {/* Date Filter Section */}
@@ -116,75 +222,118 @@ export default function Dashboard() {
         />
 
         {/* SECCIÓN 1 — TOTAL (Adquisición) */}
-        <Section title="TOTAL (Adquisición)">
+        <Section title={`TOTAL (Adquisición) - ${clientData?.name}`}>
           <div className="space-y-6">
-            {/* Fila 1: Métricas de Adquisición */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {/* Fila 1: Métricas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <KpiCard
-                title="Inversión total en Ads"
-                value={money0(spendAdsTotal)}
-                variation={variations[0]}
+                title="Inversión en publicidad"
+                value={`$${clientData?.investment.toLocaleString()}`}
+                variation="+15% vs mes anterior"
               />
               <KpiCard
-                title="Agendas conseguidas"
-                value={agendasQTotal.toString()}
-                variation={variations[1]}
+                title="Impresiones"
+                value={clientData?.impressions.toLocaleString()}
+                variation="+8% vs mes anterior"
               />
               <KpiCard
-                title="CPA-Q"
-                value={money2(cpaQ)}
-                variation={variations[2]}
+                title="CTR"
+                value={`${clientData?.ctr}%`}
+                variation="+0.3% vs mes anterior"
               />
               <KpiCard
-                title="CPS-Q"
-                value={money2(cpsQ)}
-                variation={variations[3]}
-              />
-              <KpiCard
-                title="CAC"
-                value={money0(cac)}
-                variation={variations[7]}
+                title="VSL PLAY RATE %"
+                value={`${clientData?.vslPlayRate}%`}
+                variation="+2.1% vs mes anterior"
               />
             </div>
             
-            {/* Fila 2: Métricas de Ventas y Resultados */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Fila 2: Métricas de Engagement y Reuniones */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <KpiCard
-                title="Ventas realizadas"
-                value={salesTotalAll.toLocaleString()}
-                variation={variations[4]}
+                title="VSL ENGAGEMENT %"
+                value={`${clientData?.vslEngagement}%`}
+                variation="+1.8% vs mes anterior"
               />
               <KpiCard
-                title="Cash Collected"
-                value={money0(cashTotalAll)}
-                variation={variations[5]}
+                title="Reuniones agendadas"
+                value={clientData?.meetingsScheduled.toString()}
+                variation="+12% vs mes anterior"
+              />
+              <KpiCard
+                title="Reuniones calificadas"
+                value={clientData?.meetingsQualified.toString()}
+                variation="+15% vs mes anterior"
+              />
+              <KpiCard
+                title="Reuniones asistidas (show rate)"
+                value={`${clientData?.meetingsAttended} (${((clientData?.meetingsAttended / clientData?.meetingsQualified) * 100).toFixed(1)}%)`}
+                variation="+15% vs mes anterior"
+              />
+            </div>
+
+            {/* Fila 3: Llamadas cerradas y Métricas Financieras */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <KpiCard
+                title="Llamadas cerradas (close rate)"
+                value={`${clientData?.callsClosed} (${((clientData?.callsClosed / clientData?.meetingsAttended) * 100).toFixed(1)}%)`}
+                variation="+8% vs mes anterior"
               />
               <KpiCard
                 title="Facturación"
-                value={money0(billingTotal)}
-                variation={variations[6]}
+                value={`$${clientData?.revenue.toLocaleString()}`}
+                variation="+18.5% vs mes anterior"
               />
               <KpiCard
-                title="ROAS General"
-                value={spendAdsTotal > 0 ? x(roasGeneral) : '—'}
-                variation={variations[8]}
+                title="Cash Collected"
+                value={`$${clientData?.cash.toLocaleString()}`}
+                variation="+22.1% vs mes anterior"
+              />
+              <KpiCard
+                title="Ticket promedio"
+                value={`$${clientData?.avgTicket.toLocaleString()}`}
+                variation="+5.7% vs mes anterior"
+              />
+            </div>
+
+            {/* Fila 4: Métricas de Costos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <KpiCard
+                title="Costo por agenda calificada"
+                value={`$${(clientData?.investment / clientData?.meetingsQualified).toFixed(2)}`}
+                variation="-8.3% vs mes anterior"
+              />
+              <KpiCard
+                title="Costo por show"
+                value={`$${(clientData?.investment / clientData?.meetingsAttended).toFixed(2)}`}
+                variation="-12.1% vs mes anterior"
+              />
+              <KpiCard
+                title="Costo por adquisición (CAC)"
+                value={`$${(clientData?.investment / clientData?.callsClosed).toFixed(2)}`}
+                variation="-6.8% vs mes anterior"
+              />
+              <KpiCard
+                title="ROAS"
+                value={`${(clientData?.revenue / clientData?.investment).toFixed(1)}x`}
+                variation="+0.4x vs mes anterior"
               />
             </div>
           </div>
         </Section>
 
-        {/* SECCIÓN 2 — MÉTRICAS DE ANUNCIOS / ORIGEN DE VENTAS */}
-        <Section title="MÉTRICAS DE ANUNCIOS / ORIGEN DE VENTAS">
+        {/* SECCIÓN 2 — MÉTRICAS DE ANUNCIOS */}
+        <Section title="MÉTRICAS DE ANUNCIOS">
           <div className="space-y-8">
-            {/* Method Summary Cards */}
-                          <MethodSummaryCards methods={methodsData as Method[]} />
+            {/* Table Ads con desglose por campaña */}
+            <TableAds ads={adsData as Ad[]} />
             
-                          <TableAds ads={adsData as Ad[]} />
-                          <TableMethods methods={methodsData as Method[]} />
+            {/* Resumen por medio (sin tarjetas duplicadas) */}
+            <TableMethods methods={methodsData as Method[]} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                              <BarCashVsSpend methods={methodsData as Method[]} />
-                <ROASChart methods={methodsData as Method[]} />
+              <BarCashVsSpend methods={methodsData as Method[]} />
+              <ROASChart methods={methodsData as Method[]} />
             </div>
           </div>
         </Section>
@@ -192,34 +341,29 @@ export default function Dashboard() {
         {/* SECCIÓN 3 — VENTAS (Tracker de Closers) */}
         <Section title="VENTAS (Tracker de Closers)">
           <div className="space-y-8">
-            {/* Sales Totals */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <KpiCard
-                title="Cierres"
-                value={totalSales.toString()}
-              />
-              <KpiCard
-                title="Cash Collected"
-                value={money0(totalCash)}
-              />
-              <KpiCard
-                title="Facturación"
-                value={money0(totalCash)}
-              />
-              <KpiCard
-                title="% Cierre"
-                value={pct(cierrePercentage)}
-              />
-              <KpiCard
-                title="% Show"
-                value={pct(showPercentage)}
-              />
-            </div>
-            
-                          <TableClosers closers={closersData as Closer[]} dateRange={dateRange} />
+            {/* Tabla de closers - se mantiene visible */}
+            <TableClosers closers={closersData as Closer[]} dateRange={dateRange} />
           </div>
         </Section>
       </main>
+
+      {/* Chat Button */}
+      {!isChatOpen && (
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 group"
+        >
+          <svg className="w-6 h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </button>
+      )}
+
+      {/* Chat Widget */}
+      <ChatWidget 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
     </div>
   );
-} 
+}

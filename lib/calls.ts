@@ -34,6 +34,15 @@ export const fmtDateTime = (ts: string): string => {
   });
 };
 
+export const fmtDate = (ts: string): string => {
+  const date = new Date(ts);
+  return date.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
 export const getOutcomeColor = (outcome: string): string => {
   switch (outcome) {
     case 'Show':

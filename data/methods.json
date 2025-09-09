@@ -1,7 +1,5 @@
 [
-  { "method":"TikTok Ads","spend":2850,"agendas":180,"agendasQ":148,"showsQ":120,"sales":30,"cash":7900,"billing":8900 },
   { "method":"Meta Ads","spend":4200,"agendas":210,"agendasQ":165,"showsQ":132,"sales":41,"cash":10800,"billing":12500 },
-  { "method":"Google Ads","spend":1950,"agendas":115,"agendasQ":92,"showsQ":75,"sales":24,"cash":5900,"billing":6800 },
   { "method":"Prospección","spend":0,"messages":320,"agendas":80,"agendasQ":64,"showsQ":51,"sales":16,"cash":4300,"billing":4300 },
   { "method":"Orgánico","spend":0,"videos":18,"agendas":60,"agendasQ":48,"showsQ":39,"sales":11,"cash":3000,"billing":3000 }
 ] 

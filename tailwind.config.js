@@ -14,8 +14,6 @@ module.exports = {
         border: 'rgba(255,255,255,0.10)',
         tx1: '#E6ECFF',
         tx2: '#9DA9C0',
-        google: '#4285F4',
-        tiktok: '#FE2C55',
         meta: '#1877F2',
         prospe: '#34A853',
         organ: '#FF6F61',

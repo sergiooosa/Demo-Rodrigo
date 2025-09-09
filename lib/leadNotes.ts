@@ -6,11 +6,9 @@ export function generateMockLeadNote(lead: string, closer: string, result?: stri
   const firstNames = ['Carlos', 'María', 'Luis', 'Ana', 'Pedro', 'Sofia', 'Juan', 'Laura', 'Diego', 'Carmen'];
   const lastNames = ['Pérez', 'González', 'Rodríguez', 'López', 'Castro', 'Martínez', 'Silva', 'Torres', 'Morales', 'Díaz'];
   const domains = ['gmail.com', 'hotmail.com', 'empresa.com', 'startup.co', 'tech.com', 'mail.com'];
-  const sources = ['Meta Ads', 'TikTok Ads', 'Google Ads', 'Prospección', 'Orgánico'];
+  const sources = ['Meta Ads', 'Prospección', 'Orgánico'];
   const campaigns = {
     'Meta Ads': ['Meta Carousel A', 'Meta Video B', 'Meta Lead Gen'],
-    'TikTok Ads': ['TT Lead Gen A', 'TT Lead Gen B', 'TT Video Campaign'],
-    'Google Ads': ['Google Search A', 'Google Display B', 'Google Shopping'],
     'Prospección': ['LinkedIn Outreach', 'Cold Email', 'WhatsApp'],
     'Orgánico': ['Blog Content', 'Social Media', 'Referrals']
   };
@@ -87,7 +85,7 @@ export function generateMockLeadNote(lead: string, closer: string, result?: stri
     email,
     fuente: source,
     campania: campaign,
-    adId: source.includes('Meta') ? 'FB-01' : source.includes('TikTok') ? 'TT-01' : source.includes('Google') ? 'GG-01' : '',
+    adId: source.includes('Meta') ? 'FB-01' : '',
     score,
     estatus,
     interacciones: 1 + (randomSeed % 5),
