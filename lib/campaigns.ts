@@ -30,6 +30,8 @@ export const generateCampaignsFromAd = (ad: Ad): SubCampaign[] => {
     campaigns.push({
       name: campaignName,
       spend,
+      impressions: Math.round(ad.impressions * weight),
+      ctr: +(ad.ctr * (0.8 + Math.random() * 0.4)).toFixed(2), // 0.8-1.2x variation
       agendasQ,
       showsQ,
       sales,
