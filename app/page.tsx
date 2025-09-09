@@ -228,12 +228,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <KpiCard
                 title="Inversión en publicidad"
-                value={`$${clientData?.investment.toLocaleString()}`}
+                value={`$${clientData?.investment?.toLocaleString() || '0'}`}
                 variation="+15% vs mes anterior"
               />
               <KpiCard
                 title="Impresiones"
-                value={clientData?.impressions.toLocaleString()}
+                value={clientData?.impressions?.toLocaleString() || '0'}
                 variation="+8% vs mes anterior"
               />
               <KpiCard
@@ -257,17 +257,17 @@ export default function Dashboard() {
               />
               <KpiCard
                 title="Reuniones agendadas"
-                value={clientData?.meetingsScheduled.toString()}
+                value={clientData?.meetingsScheduled?.toString() || '0'}
                 variation="+12% vs mes anterior"
               />
               <KpiCard
                 title="Reuniones calificadas"
-                value={clientData?.meetingsQualified.toString()}
+                value={clientData?.meetingsQualified?.toString() || '0'}
                 variation="+15% vs mes anterior"
               />
               <KpiCard
                 title="Reuniones asistidas (show rate)"
-                value={`${clientData?.meetingsAttended} (${((clientData?.meetingsAttended / clientData?.meetingsQualified) * 100).toFixed(1)}%)`}
+                value={`${clientData?.meetingsAttended || 0} (${clientData?.meetingsQualified ? ((clientData.meetingsAttended / clientData.meetingsQualified) * 100).toFixed(1) : '0.0'}%)`}
                 variation="+15% vs mes anterior"
               />
             </div>
@@ -276,22 +276,22 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <KpiCard
                 title="Llamadas cerradas (close rate)"
-                value={`${clientData?.callsClosed} (${((clientData?.callsClosed / clientData?.meetingsAttended) * 100).toFixed(1)}%)`}
+                value={`${clientData?.callsClosed || 0} (${clientData?.meetingsAttended ? ((clientData.callsClosed / clientData.meetingsAttended) * 100).toFixed(1) : '0.0'}%)`}
                 variation="+8% vs mes anterior"
               />
               <KpiCard
                 title="Facturación"
-                value={`$${clientData?.revenue.toLocaleString()}`}
+                value={`$${clientData?.revenue?.toLocaleString() || '0'}`}
                 variation="+18.5% vs mes anterior"
               />
               <KpiCard
                 title="Cash Collected"
-                value={`$${clientData?.cash.toLocaleString()}`}
+                value={`$${clientData?.cash?.toLocaleString() || '0'}`}
                 variation="+22.1% vs mes anterior"
               />
               <KpiCard
                 title="Ticket promedio"
-                value={`$${clientData?.avgTicket.toLocaleString()}`}
+                value={`$${clientData?.avgTicket?.toLocaleString() || '0'}`}
                 variation="+5.7% vs mes anterior"
               />
             </div>
@@ -300,22 +300,22 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <KpiCard
                 title="Costo por agenda calificada"
-                value={`$${(clientData?.investment / clientData?.meetingsQualified).toFixed(2)}`}
+                value={`$${clientData?.investment && clientData?.meetingsQualified ? (clientData.investment / clientData.meetingsQualified).toFixed(2) : '0.00'}`}
                 variation="-8.3% vs mes anterior"
               />
               <KpiCard
                 title="Costo por show"
-                value={`$${(clientData?.investment / clientData?.meetingsAttended).toFixed(2)}`}
+                value={`$${clientData?.investment && clientData?.meetingsAttended ? (clientData.investment / clientData.meetingsAttended).toFixed(2) : '0.00'}`}
                 variation="-12.1% vs mes anterior"
               />
               <KpiCard
                 title="Costo por adquisición (CAC)"
-                value={`$${(clientData?.investment / clientData?.callsClosed).toFixed(2)}`}
+                value={`$${clientData?.investment && clientData?.callsClosed ? (clientData.investment / clientData.callsClosed).toFixed(2) : '0.00'}`}
                 variation="-6.8% vs mes anterior"
               />
               <KpiCard
                 title="ROAS"
-                value={`${(clientData?.revenue / clientData?.investment).toFixed(1)}x`}
+                value={`${clientData?.revenue && clientData?.investment ? (clientData.revenue / clientData.investment).toFixed(1) : '0.0'}x`}
                 variation="+0.4x vs mes anterior"
               />
             </div>
