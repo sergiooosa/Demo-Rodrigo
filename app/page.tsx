@@ -72,21 +72,35 @@ export default function Dashboard() {
     const client = clients.find(c => c.id === clientId);
     const baseMultiplier = Math.random() * 0.5 + 0.75; // Entre 0.75 y 1.25
     
+    // Datos reales de los anuncios (Testing)
+    const realInvestment = 4800;
+    const realImpressions = 45000;
+    const realCtr = 2.8;
+    const realVslPlayRate = 65.2;
+    const realVslEngagement = 35.2;
+    const realMeetingsScheduled = 156; // AgendasQ total (20+30+35+8+9+25+22+7)
+    const realMeetingsQualified = 129; // ShowsQ total (17+25+28+7+8+20+18+6)
+    const realMeetingsAttended = 129; // ShowsQ total (mismo que calificadas)
+    const realCallsClosed = 46; // Ventas totales (0+8+6+6+7+8+7+4)
+    const realRevenue = 94000; // Cash total
+    const realCash = 94000; // Cash total
+    const realAvgTicket = Math.round(94000 / 46); // Cash / Ventas
+    
     return {
       name: client?.name || 'Cliente',
       industry: client?.industry || 'Negocio',
-      investment: Math.round(5100 * baseMultiplier),
-      impressions: Math.round(150000 * baseMultiplier),
-      ctr: (2.8 * baseMultiplier).toFixed(1),
-      vslPlayRate: (65.2 * baseMultiplier).toFixed(1),
-      vslEngagement: (35.2 * baseMultiplier).toFixed(1),
-      meetingsScheduled: Math.round(247 * baseMultiplier),
-      meetingsQualified: Math.round(201 * baseMultiplier),
-      meetingsAttended: Math.round(170 * baseMultiplier),
-      callsClosed: Math.round(63 * baseMultiplier),
-      revenue: Math.round(18500 * baseMultiplier),
-      cash: Math.round(18500 * baseMultiplier),
-      avgTicket: Math.round(18500 * baseMultiplier / Math.round(63 * baseMultiplier))
+      investment: Math.round(realInvestment * baseMultiplier),
+      impressions: Math.round(realImpressions * baseMultiplier),
+      ctr: (realCtr * baseMultiplier).toFixed(1),
+      vslPlayRate: (realVslPlayRate * baseMultiplier).toFixed(1),
+      vslEngagement: (realVslEngagement * baseMultiplier).toFixed(1),
+      meetingsScheduled: Math.round(realMeetingsScheduled * baseMultiplier),
+      meetingsQualified: Math.round(realMeetingsQualified * baseMultiplier),
+      meetingsAttended: Math.round(realMeetingsAttended * baseMultiplier),
+      callsClosed: Math.round(realCallsClosed * baseMultiplier),
+      revenue: Math.round(realRevenue * baseMultiplier),
+      cash: Math.round(realCash * baseMultiplier),
+      avgTicket: Math.round(realAvgTicket * baseMultiplier)
     };
   };
 
@@ -124,7 +138,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-6 mb-8">
           <div className="glass p-8 rounded-xl text-center">
             <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent mb-2 animate-pulse">
-              ¡Hola Rodrigo!
+              Dashboard Tracker
             </h2>
             <p className="text-lg text-tx2">¿Qué cliente quieres revisar hoy?</p>
           </div>
@@ -207,7 +221,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-6 mb-8">
         <div className="glass p-8 rounded-xl text-center">
           <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent mb-2 animate-pulse">
-            ¡Hola Rodrigo!
+            Dashboard Personalizado
           </h2>
           <p className="text-lg text-tx2">Dashboard personalizado de {clients.find(c => c.id === selectedClient)?.name}</p>
         </div>

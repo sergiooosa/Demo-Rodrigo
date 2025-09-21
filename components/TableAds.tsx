@@ -36,7 +36,9 @@ export default function TableAds({ ads }: TableAdsProps) {
     const cpaq = campaign.cpaq ?? safeDiv(campaign.spend, campaign.agendasQ);
     const cpsq = campaign.cpsq ?? safeDiv(campaign.spend, campaign.showsQ);
     const cac = campaign.cac ?? safeDiv(campaign.spend, campaign.sales);
-    return { cpaq, cpsq, cac };
+    const closeRate = safeDiv(campaign.sales, campaign.showsQ) * 100; // Porcentaje de cierre
+    const avgTicket = safeDiv(campaign.cash, campaign.sales); // Ticket promedio
+    return { cpaq, cpsq, cac, closeRate: closeRate.toFixed(1), avgTicket };
   };
 
   // Calculate totals for an ad (sum of all its campaigns)
@@ -44,38 +46,34 @@ export default function TableAds({ ads }: TableAdsProps) {
     const campaigns = getAdCampaigns(ad);
     const totals = campaigns.reduce((acc, campaign) => ({
       spend: acc.spend + campaign.spend,
-      impressions: acc.impressions + campaign.impressions,
       agendasQ: acc.agendasQ + campaign.agendasQ,
       showsQ: acc.showsQ + campaign.showsQ,
       sales: acc.sales + campaign.sales,
       cash: acc.cash + campaign.cash,
-      reservas: acc.reservas + (campaign.reservas || 0),
-      valorReservas: acc.valorReservas + (campaign.valorReservas || 0),
     }), {
       spend: 0,
-      impressions: 0,
       agendasQ: 0,
       showsQ: 0,
       sales: 0,
       cash: 0,
-      reservas: 0,
-      valorReservas: 0,
     });
 
     // Calculate derived metrics
-    const ctr = safeDiv(totals.impressions, totals.spend) * 100; // This would need actual clicks data
     const cpaq = safeDiv(totals.spend, totals.agendasQ);
     const cpsq = safeDiv(totals.spend, totals.showsQ);
     const cac = safeDiv(totals.spend, totals.sales);
     const roas = safeDiv(totals.cash, totals.spend);
+    const closeRate = safeDiv(totals.sales, totals.showsQ) * 100; // Porcentaje de cierre
+    const avgTicket = safeDiv(totals.cash, totals.sales); // Ticket promedio
 
     return {
       ...totals,
-      ctr: ctr.toFixed(1),
       cpaq,
       cpsq,
       cac,
       roas,
+      closeRate: closeRate.toFixed(1),
+      avgTicket,
     };
   };
 
@@ -114,16 +112,13 @@ export default function TableAds({ ads }: TableAdsProps) {
         <thead>
           <tr className="border-b border-border">
             <th className="text-left py-3 px-2 text-tx2">Ad / Campaña</th>
-            <th className="text-left py-3 px-2 text-tx2">Medio</th>
             <th className="text-right py-3 px-2 text-tx2">Spend</th>
-            <th className="text-right py-3 px-2 text-tx2">Impresiones</th>
-            <th className="text-right py-3 px-2 text-tx2">CTR</th>
             <th className="text-right py-3 px-2 text-tx2">AgendasQ</th>
             <th className="text-right py-3 px-2 text-tx2">ShowsQ</th>
             <th className="text-right py-3 px-2 text-tx2">Ventas</th>
             <th className="text-right py-3 px-2 text-tx2">Cash</th>
-            <th className="text-right py-3 px-2 text-tx2">Reservas</th>
-            <th className="text-right py-3 px-2 text-tx2">Valor Reservas</th>
+            <th className="text-right py-3 px-2 text-tx2">% Cierre</th>
+            <th className="text-right py-3 px-2 text-tx2">Ticket Prom</th>
             <th className="text-right py-3 px-2 text-tx2">CPA-Q</th>
             <th className="text-right py-3 px-2 text-tx2">CPS-Q</th>
             <th className="text-right py-3 px-2 text-tx2">CAC</th>
@@ -158,20 +153,17 @@ export default function TableAds({ ads }: TableAdsProps) {
                       <span className="font-medium">{ad.adName}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-2 text-tx2">{ad.medium}</td>
                   {(() => {
                     const totals = getAdTotals(ad);
                     return (
                       <>
                         <td className="py-3 px-2 text-right">{money0(totals.spend)}</td>
-                        <td className="py-3 px-2 text-right">{totals.impressions.toLocaleString()}</td>
-                        <td className="py-3 px-2 text-right">{totals.ctr}%</td>
                         <td className="py-3 px-2 text-right">{totals.agendasQ}</td>
                         <td className="py-3 px-2 text-right">{totals.showsQ}</td>
                         <td className="py-3 px-2 text-right font-semibold">{totals.sales}</td>
                         <td className="py-3 px-2 text-right">{money0(totals.cash)}</td>
-                        <td className="py-3 px-2 text-right">{totals.reservas}</td>
-                        <td className="py-3 px-2 text-right">{money0(totals.valorReservas)}</td>
+                        <td className="py-3 px-2 text-right text-blue-400 font-semibold">{totals.closeRate}%</td>
+                        <td className="py-3 px-2 text-right text-green-400 font-semibold">{money0(totals.avgTicket)}</td>
                         <td className="py-3 px-2 text-right">{money2(totals.cpaq)}</td>
                         <td className="py-3 px-2 text-right">{money2(totals.cpsq)}</td>
                         <td className="py-3 px-2 text-right">{money0(totals.cac)}</td>
@@ -197,16 +189,13 @@ export default function TableAds({ ads }: TableAdsProps) {
                       <td className="py-2 px-2 pl-8">
                         <strong className="text-tx1">{campaign.name}</strong>
                       </td>
-                      <td className="py-2 px-2 text-tx2">{ad.medium}</td>
                       <td className="py-2 px-2 text-right">{money0(campaign.spend)}</td>
-                      <td className="py-2 px-2 text-right">{campaign.impressions.toLocaleString()}</td>
-                      <td className="py-2 px-2 text-right">{campaign.ctr}%</td>
                       <td className="py-2 px-2 text-right">{campaign.agendasQ}</td>
                       <td className="py-2 px-2 text-right">{campaign.showsQ}</td>
                       <td className="py-2 px-2 text-right font-semibold">{campaign.sales}</td>
                       <td className="py-2 px-2 text-right">{money0(campaign.cash)}</td>
-                      <td className="py-2 px-2 text-right">{campaign.reservas || 0}</td>
-                      <td className="py-2 px-2 text-right">{money0(campaign.valorReservas || 0)}</td>
+                      <td className="py-2 px-2 text-right text-blue-400 font-semibold">{metrics.closeRate}%</td>
+                      <td className="py-2 px-2 text-right text-green-400 font-semibold">{money0(metrics.avgTicket)}</td>
                       <td className="py-2 px-2 text-right">{money2(metrics.cpaq)}</td>
                       <td className="py-2 px-2 text-right">{money2(metrics.cpsq)}</td>
                       <td className="py-2 px-2 text-right">{money0(metrics.cac)}</td>
