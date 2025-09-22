@@ -51,6 +51,16 @@ const methodsData = [
   { "method":"Orgánico","spend":0,"videos":18,"agendas":60,"agendasQ":48,"showsQ":39,"sales":11,"cash":3000,"billing":3000 }
 ];
 
+// Métricas simuladas del VSL (timeline de engagement por minuto)
+const vslMetrics = {
+  playRatePct: 65.0,
+  engagementPct: 35.0,
+  // Porcentaje de audiencia retenida por minuto 0..9 (10 min)
+  retentionByMinutePct: [100, 78, 55, 34, 28, 24, 20, 18, 16, 15],
+  // Minuto donde cae ~50% de la audiencia
+  majorDropMinute: 3 // Se cae al 34% en el minuto 3
+};
+
 export default function ChatWidget({ isOpen, onClose }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -158,7 +168,25 @@ export default function ChatWidget({ isOpen, onClose }: ChatWidgetProps) {
         `• ${m.method}: $${m.cash.toLocaleString()} (${m.sales} ventas)`
       ).join('\n')}\n\n**Recomendación:** ${bestMethod.method} es tu canal más efectivo. Considera aumentar la inversión en este método.`;
     }
-    
+
+    // Recomendaciones para vender más
+    if (lowerQuestion.includes('vender más') || lowerQuestion.includes('vender mas') || lowerQuestion.includes('recomendaciones para vender')) {
+      const lowPerforming = adsData[0].campaigns.filter(c => c.roas < 10);
+      const best = adsData[0].campaigns.reduce((b, c) => c.roas > b.roas ? c : b);
+      const totalLowSpend = lowPerforming.reduce((sum, c) => sum + c.spend, 0);
+      const toPauseList = lowPerforming.map(c => `${c.name} (ROAS ${c.roas}x, $${c.spend})`).join(', ');
+      return `🚀 **Plan para vender más (acciones directas):**\n\n1) **Apaga:** ${toPauseList || '—'}\n2) **Mete ese presupuesto en:** ${best.name} (ROAS ${best.roas}x)\n3) **Por qué:** Maximiza retorno moviendo $${totalLowSpend} de campañas sin resultados hacia la campaña top.\n4) **Siguiente paso:** Revisa creatividades del top performer y duplica con 20-30% más presupuesto.`;
+    }
+
+    // Detección de cuello de botella (ads -> VSL -> citas -> shows -> cierre)
+    if (lowerQuestion.includes('cuello de botella') || lowerQuestion.includes('bottleneck')) {
+      const avgCTR = (adsData[0].campaigns.reduce((sum, c) => sum + c.ctr, 0) / adsData[0].campaigns.length).toFixed(1);
+      const engagement = vslMetrics.engagementPct.toFixed(1);
+      const dropMinute = vslMetrics.majorDropMinute;
+      const retentionAtDrop = vslMetrics.retentionByMinutePct[dropMinute];
+      return `🧪 **Cuello de botella detectado:**\n\n• **Ads (CTR):** ${avgCTR}% (saludable)\n• **VSL (engagement):** ${engagement}% (BAJO)\n• **Pérdida masiva:** Minuto ${dropMinute} — retención al ${retentionAtDrop}%\n• **Pipeline:** Citas y shows razonables; el problema aparece antes del call.\n\n🎯 **Qué cambiar ahora:**\n• Re-editar el VSL desde el minuto ${dropMinute - 1} al ${dropMinute + 1}.\n• **Cambia el minuto ${dropMinute}**: ahí se va ~50% de las personas.\n• Agrega patrón-interrupt, beneficio 1-2 frases antes del CTA, y prueba otro hook.\n• Mantén duración similar; enfoca en claridad de la promesa y prueba social.\n\n💡 **Siguiente experimento:** 2 nuevas versiones del VSL cambiando solo esa sección; mide retención minuto a minuto en 72h.`;
+    }
+
     // Análisis de cambios recomendados
     if (lowerQuestion.includes('cambio') || lowerQuestion.includes('cambios') || lowerQuestion.includes('recomendación') || lowerQuestion.includes('recomendaciones')) {
       const worstCampaign = adsData[0].campaigns.reduce((worst, current) => 
