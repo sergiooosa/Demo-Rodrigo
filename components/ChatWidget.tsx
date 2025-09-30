@@ -94,45 +94,115 @@ export default function ChatWidget({ isOpen, onClose }: ChatWidgetProps) {
       return `🏆 **Tu anuncio ganador es H5** con un ROAS de ${bestCampaign.roas}x\n\n**¿Por qué es el ganador?**\n• ROAS más alto: ${bestCampaign.roas}x\n• Cash generado: $${bestCampaign.cash.toLocaleString()}\n• 7 ventas cerradas\n• Inversión: $${bestCampaign.spend}\n• CTR: ${bestCampaign.ctr}%\n\n**Recomendación:** Escala este anuncio aumentando el presupuesto en un 20-30% para maximizar resultados.`;
     }
     
-    // Análisis de anuncios a apagar
-    if (lowerQuestion.includes('apagar') || lowerQuestion.includes('pausar') || lowerQuestion.includes('quitar')) {
+    // Análisis de anuncios a apagar (múltiples variantes)
+    if (lowerQuestion.includes('apagar') || lowerQuestion.includes('pausar') || lowerQuestion.includes('quitar') || 
+        lowerQuestion.includes('no me rinde') || lowerQuestion.includes('no rinde') || lowerQuestion.includes('no rendimiento')) {
       const worstCampaign = adsData[0].campaigns.reduce((worst, current) => 
         current.roas < worst.roas ? current : worst
       );
       const lowPerformingCampaigns = adsData[0].campaigns.filter(c => c.roas < 10);
       
-      if (worstCampaign.name === 'H1') {
-        return `⚠️ **Recomiendo apagar H1** inmediatamente\n\n**¿Por qué apagarlo?**\n• ROAS: 0x (sin retorno)\n• 0 ventas cerradas\n• $${worstCampaign.spend} gastados sin resultados\n• CTR: ${worstCampaign.ctr}% (aceptable pero sin conversión)\n\n**Alternativas a revisar:**\n• H4: ROAS 27.7x - Excelente rendimiento\n• H5: ROAS 28.6x - Tu mejor campaña\n• H6: ROAS 26.7x - Muy buena performance\n\n**Acción:** Pausa H1 y redistribuye su presupuesto ($500) hacia H4, H5 o H6.`;
-      } else {
-        return `📊 **Análisis de campañas de bajo rendimiento:**\n\n**Campañas a revisar:**\n${lowPerformingCampaigns.map(c => 
-          `• ${c.name}: ROAS ${c.roas}x - Cash $${c.cash.toLocaleString()}`
-        ).join('\n')}\n\n**🚨 CRÍTICO:** H3 tiene ROAS de solo 2.0x - muy por debajo del estándar de 10x+\n\n**Recomendación:** Pausa H1 y H3 inmediatamente. Redistribuye su presupuesto ($1,050 total) hacia H4, H5 y H6 que tienen excelente rendimiento (ROAS 25x+).`;
-      }
+      // Análisis de costo por adquisición
+      const campaignsWithCAC = adsData[0].campaigns.map(c => ({
+        ...c,
+        cac: c.sales > 0 ? c.spend / c.sales : Infinity,
+        showRate: c.showsQ / c.agendasQ * 100,
+        closeRate: c.sales / c.showsQ * 100
+      }));
+      
+      const worstCAC = campaignsWithCAC.reduce((worst, current) => 
+        current.cac < worst.cac ? current : worst
+      );
+      
+      return `🚨 **ANUNCIOS A APAGAR - Análisis Completo:**\n\n**1. Por ROAS (Retorno):**\n• **${worstCampaign.name}** - ROAS ${worstCampaign.roas}x (CRÍTICO)\n• Gasto: $${worstCampaign.spend} sin retorno\n\n**2. Por Costo de Adquisición:**\n• **${worstCAC.name}** - CAC $${worstCAC.cac.toFixed(2)} por venta\n• Muy alto costo vs otros anuncios\n\n**3. Por Asistencia (No-Shows):**\n${campaignsWithCAC.map(c => 
+        `• ${c.name}: Show rate ${c.showRate.toFixed(1)}% (${c.agendasQ} agendas → ${c.showsQ} shows)`
+      ).join('\n')}\n\n**4. Por Calidad de Leads:**\n${campaignsWithCAC.map(c => 
+        `• ${c.name}: Close rate ${c.closeRate.toFixed(1)}% (${c.showsQ} shows → ${c.sales} ventas)`
+      ).join('\n')}\n\n**🎯 RECOMENDACIÓN FINAL:**\nPausa **${worstCampaign.name}** y **${worstCAC.name}** inmediatamente. Redistribuye presupuesto hacia H4, H5, H6 (ROAS 25x+).`;
     }
     
-    // Análisis de closers
-    if (lowerQuestion.includes('closer') || lowerQuestion.includes('vendedor') || lowerQuestion.includes('ventas')) {
-      const bestCloser = closersData.reduce((best, current) => 
-        current.sales > best.sales ? current : best
-      );
-      const worstCloser = closersData.reduce((worst, current) => 
-        current.sales < worst.sales ? current : worst
-      );
-      const totalSales = closersData.reduce((sum, closer) => sum + closer.sales, 0);
-      const totalCash = closersData.reduce((sum, closer) => sum + closer.cash, 0);
+    // Análisis específico de asistencia (no-shows)
+    if (lowerQuestion.includes('no asisten') || lowerQuestion.includes('no asistencia') || lowerQuestion.includes('no-show') || 
+        lowerQuestion.includes('personas que no asisten') || lowerQuestion.includes('no shows')) {
+      const campaignsWithShows = adsData[0].campaigns.map(c => ({
+        ...c,
+        showRate: (c.showsQ / c.agendasQ) * 100,
+        noShowRate: ((c.agendasQ - c.showsQ) / c.agendasQ) * 100
+      }));
       
-      // Calcular close rates
+      const worstShowRate = campaignsWithShows.reduce((worst, current) => 
+        current.showRate < worst.showRate ? current : worst
+      );
+      
+      return `📊 **ANÁLISIS DE ASISTENCIA (No-Shows):**\n\n**🚨 Peor en asistencia:** ${worstShowRate.name}\n• Show rate: ${worstShowRate.showRate.toFixed(1)}%\n• No-show rate: ${worstShowRate.noShowRate.toFixed(1)}%\n• ${worstShowRate.agendasQ} agendas → solo ${worstShowRate.showsQ} shows\n\n**Comparativa por campaña:**\n${campaignsWithShows.map(c => 
+        `• ${c.name}: ${c.showsQ}/${c.agendasQ} shows (${c.showRate.toFixed(1)}% asistencia)`
+      ).join('\n')}\n\n**🎯 RECOMENDACIÓN:** ${worstShowRate.name} trae leads que no asisten. Revisa el targeting y la calidad del mensaje.`;
+    }
+    
+    // Análisis específico de calidad de leads (no compran)
+    if (lowerQuestion.includes('no compran') || lowerQuestion.includes('no compra') || lowerQuestion.includes('leads que no compran') || 
+        lowerQuestion.includes('calidad de leads') || lowerQuestion.includes('leads de baja calidad')) {
+      const campaignsWithCloseRate = adsData[0].campaigns.map(c => ({
+        ...c,
+        closeRate: (c.sales / c.showsQ) * 100,
+        leadQuality: c.sales / c.agendasQ * 100
+      }));
+      
+      const worstCloseRate = campaignsWithCloseRate.reduce((worst, current) => 
+        current.closeRate < worst.closeRate ? current : worst
+      );
+      
+      return `💰 **ANÁLISIS DE CALIDAD DE LEADS:**\n\n**🚨 Peor en conversión:** ${worstCloseRate.name}\n• Close rate: ${worstCloseRate.closeRate.toFixed(1)}%\n• Calidad de leads: ${worstCloseRate.leadQuality.toFixed(1)}%\n• ${worstCloseRate.showsQ} shows → solo ${worstCloseRate.sales} ventas\n\n**Comparativa por campaña:**\n${campaignsWithCloseRate.map(c => 
+        `• ${c.name}: ${c.sales}/${c.showsQ} ventas (${c.closeRate.toFixed(1)}% close rate)`
+      ).join('\n')}\n\n**🎯 RECOMENDACIÓN:** ${worstCloseRate.name} trae leads que no compran. Revisa el targeting y el mensaje para atraer mejor audiencia.`;
+    }
+    
+    // Análisis de mejor tasa de cierre
+    if (lowerQuestion.includes('mejor tasa de cierre') || lowerQuestion.includes('mejor cierre') || lowerQuestion.includes('mejor conversión')) {
+      const campaignsWithCloseRate = adsData[0].campaigns.map(c => ({
+        ...c,
+        closeRate: (c.sales / c.showsQ) * 100
+      }));
+      
+      const bestCloseRate = campaignsWithCloseRate.reduce((best, current) => 
+        current.closeRate > best.closeRate ? current : best
+      );
+      
+      return `🏆 **MEJOR TASA DE CIERRE:**\n\n**Ganador:** ${bestCloseRate.name}\n• Close rate: ${bestCloseRate.closeRate.toFixed(1)}%\n• ${bestCloseRate.sales} ventas de ${bestCloseRate.showsQ} shows\n• Cash generado: $${bestCloseRate.cash.toLocaleString()}\n\n**Ranking completo:**\n${campaignsWithCloseRate.sort((a, b) => b.closeRate - a.closeRate).map((c, i) => 
+        `${i + 1}. ${c.name}: ${c.closeRate.toFixed(1)}% (${c.sales}/${c.showsQ})`
+      ).join('\n')}\n\n**🎯 RECOMENDACIÓN:** Duplica la estrategia de ${bestCloseRate.name} en otras campañas.`;
+    }
+    
+    // Análisis de closers (múltiples variantes)
+    if (lowerQuestion.includes('closer') || lowerQuestion.includes('vendedor') || lowerQuestion.includes('ventas') || 
+        lowerQuestion.includes('tasa de cierre') || lowerQuestion.includes('peor tasa') || lowerQuestion.includes('mejor tasa') ||
+        lowerQuestion.includes('facturó más') || lowerQuestion.includes('desaprovechó') || lowerQuestion.includes('no-show')) {
+      
       const closersWithRates = closersData.map(closer => ({
         ...closer,
         closeRate: ((closer.sales / closer.shows) * 100).toFixed(1),
-        showRate: ((closer.shows / closer.agendas) * 100).toFixed(1)
+        showRate: ((closer.shows / closer.agendas) * 100).toFixed(1),
+        noShowRate: (((closer.agendas - closer.shows) / closer.agendas) * 100).toFixed(1),
+        wastedAgendas: closer.agendas - closer.sales
       }));
       
-      const worstPerformer = closersWithRates.reduce((worst, current) => 
+      const bestCloser = closersWithRates.reduce((best, current) => 
+        parseFloat(current.closeRate) > parseFloat(best.closeRate) ? current : best
+      );
+      const worstCloser = closersWithRates.reduce((worst, current) => 
         parseFloat(current.closeRate) < parseFloat(worst.closeRate) ? current : worst
       );
+      const topEarner = closersWithRates.reduce((best, current) => 
+        current.cash > best.cash ? current : best
+      );
+      const worstNoShow = closersWithRates.reduce((worst, current) => 
+        parseFloat(current.noShowRate) > parseFloat(worst.noShowRate) ? current : worst
+      );
+      const mostWasted = closersWithRates.reduce((worst, current) => 
+        current.wastedAgendas > worst.wastedAgendas ? current : worst
+      );
       
-      return `👥 **Análisis de Closers:**\n\n**Mejor performer:** ${bestCloser.closer}\n• Ventas: ${bestCloser.sales}\n• Cash: $${bestCloser.cash.toLocaleString()}\n• Show rate: ${((bestCloser.shows / bestCloser.agendas) * 100).toFixed(1)}%\n• Close rate: ${((bestCloser.sales / bestCloser.shows) * 100).toFixed(1)}%\n\n**⚠️ Peor performer:** ${worstPerformer.closer}\n• Close rate: ${worstPerformer.closeRate}% (CRÍTICO)\n• Ventas: ${worstPerformer.sales}\n• Cash: $${worstPerformer.cash.toLocaleString()}\n\n**Resumen total:**\n• Total ventas: ${totalSales}\n• Total cash: $${totalCash.toLocaleString()}\n• Promedio por closer: ${(totalSales / closersData.length).toFixed(1)} ventas\n\n**🚨 RECOMENDACIÓN URGENTE:** ${worstPerformer.closer} tiene un close rate de ${worstPerformer.closeRate}%, muy por debajo del promedio. Considera darle un ultimátum de 30 días o reemplazarlo.`;
+      return `👥 **ANÁLISIS COMPLETO DE CLOSERS:**\n\n**🏆 Mejor tasa de cierre:** ${bestCloser.closer}\n• Close rate: ${bestCloser.closeRate}%\n• ${bestCloser.sales} ventas de ${bestCloser.shows} shows\n\n**💰 Más facturó:** ${topEarner.closer}\n• Cash: $${topEarner.cash.toLocaleString()}\n• Ventas: ${topEarner.sales}\n\n**🚨 Peor tasa de cierre:** ${worstCloser.closer}\n• Close rate: ${worstCloser.closeRate}% (CRÍTICO)\n• Solo ${worstCloser.sales} ventas\n\n**❌ Más no-shows:** ${worstNoShow.closer}\n• No-show rate: ${worstNoShow.noShowRate}%\n• ${worstNoShow.agendas} agendas → ${worstNoShow.shows} shows\n\n**💸 Más desaprovechó agendas:** ${mostWasted.closer}\n• ${mostWasted.wastedAgendas} agendas perdidas\n• ${mostWasted.agendas} total → ${mostWasted.sales} ventas\n\n**🎯 RECOMENDACIONES:**\n• Entrenar a ${worstCloser.closer} con técnicas de ${bestCloser.closer}\n• Dar más leads a ${bestCloser.closer} y ${topEarner.closer}\n• Ultimátum a ${worstCloser.closer} y ${mostWasted.closer}`;
     }
     
     // Análisis de ROAS
@@ -227,7 +297,7 @@ export default function ChatWidget({ isOpen, onClose }: ChatWidgetProps) {
     
     // Preguntas generales
     if (lowerQuestion.includes('ayuda') || lowerQuestion.includes('help')) {
-      return `🤖 **Puedo ayudarte con:**\n\n• **Anuncios ganadores:** "¿Cuál es mi anuncio ganador?"\n• **Optimización:** "¿Qué anuncio debería apagar?"\n• **Análisis de closers:** "¿Cómo van mis vendedores?"\n• **Cambios urgentes:** "¿Qué cambios debería hacer?"\n• **Despidos:** "¿Qué closer debería despedir?"\n• **ROAS:** "¿Cuál es mi retorno de inversión?"\n• **CTR:** "¿Cómo está mi tasa de clics?"\n• **Métodos:** "¿Qué canal funciona mejor?"\n\n**Ejemplos de preguntas:**\n• "¿Cuál es mi mejor campaña?"\n• "¿Qué anuncio me está costando dinero?"\n• "¿Qué cambios debería hacer?"\n• "¿Qué closer tiene mala tasa de cierre?"\n• "¿Cuál es mi ROAS general?"`;
+      return `🤖 **Puedo ayudarte con análisis avanzados:**\n\n**📊 ANUNCIOS:**\n• "¿Qué anuncio debería apagar?"\n• "¿Qué anuncio no me rinde?"\n• "¿Qué anuncio me trae personas que no asisten?"\n• "¿Qué anuncio me trae leads que no compran?"\n• "¿Qué anuncio tiene la mejor tasa de cierre?"\n\n**👥 CLOSERS:**\n• "¿Qué closer tiene peor tasa de cierre?"\n• "¿Qué closer facturó más esta semana?"\n• "¿Quién desaprovechó más agendas?"\n• "¿Qué closer tiene la tasa de no-show más alta?"\n\n**🎯 OPTIMIZACIÓN:**\n• "¿Qué cambios debería hacer?"\n• "Dame recomendaciones para vender más"\n• "¿Cuál es mi cuello de botella?"\n• "¿Cuál es mi ROAS general?"\n\n**Ejemplos específicos:**\n• "¿Qué anuncio me trae leads que no compran?"\n• "¿Qué closer desaprovechó más agendas?"\n• "¿Cuál es mi cuello de botella?"`;
     }
     
     // Respuesta por defecto
